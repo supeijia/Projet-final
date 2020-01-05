@@ -1,0 +1,165 @@
+---
+title: "Projet final"
+author: "SU Peijia"
+date: "02/01/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Explication du jeu de données
+
+Les données que j’utilise pour ce projet viennent d’une étude faite par Cheng et al. (2017) sur l'influence des troubles du spectre autistique (ASD) sur la compréhension des présuppositions par des enfants cantonais.
+
+Référence : Cheung, C. C. H., Politzer-Ahles, S., Hwang, H., Chui, R. L. Y., Leung, M. T., & Tang, T. P. Y. (2017). Comprehension of presuppositions in school-age Cantonese-speaking children with and without autism spectrum disorders. Clinical linguistics & phonetics, 31(7-9), 557-572.
+
+Lien des données : https://osf.io/u2wsz/
+
+L'expérience cherche à comparer la performance sur les présuppositions de quatre types entre les enfants avec ASD et les enfants sans ASD.
+
+Dans le jeu de données original, il y a une varibale "Correct" dont la valeur est "TRUE" ou "FALSE" qui va susciter des problèmes dans les codes R. Mais je n'arrive pas à transmettre "TRUE"/"FALSE" en minuscule (ils deviennent tout de suite en majuscule après le changement). Ainsi, je les transforme en "VRAI"/"FAUX", expressions équivalentes en français en majuscule par python.
+
+```{python, python.reticulate = FALSE}
+file_in = open('/Users/supeijia/Desktop/data.csv', 'r').readlines()
+file_out = open('/Users/supeijia/Desktop/data1.csv', 'w')
+for line in file_in:
+    file_out.write(line.replace("TRUE", "VRAI"))
+
+file_out.close()
+
+file_in2 = open('/Users/supeijia/Desktop/data1.csv', 'r').readlines()
+file_out2 = open('/Users/supeijia/Desktop/data.csv', 'w')
+for line in file_in2:
+    file_out2.write(line.replace("FALSE", "FAUX"))
+
+file_out2.close()
+```
+
+On peut ainsi importer les données qui sont plus appropiées pour l'analyse.
+
+```{r}
+data <- read.csv(file = "/Users/supeijia/Desktop/data.csv", header = TRUE, sep=",")
+```
+
+Les données comprennent 10 variables :
+
+-La variable "Subject" réfère les participants de l'expérience qui sont classifiés aux enfants ASD ("ASD subjects") et aux enfants normales ("Typically developing children").
+
+-"Age_Month" indique l'âge des enfants participants. L'expérience choisit les participants à l'âge similaire.
+
+-"Stimuli" sont des items exposés aux participants.
+
+-"Types" sont les quatre types de présuppositions : "Existential", "Factive", "Lexical" et "Structural".
+
+-"Correct" Les participants sont demandés de déterminer si la phrase donnée est une présupposition correcte d'une phrase précédante. La valeur "True" signifie que le participant a choisi la réponse correcte alors que "False" indique qu'il a pris la réponse incorrecte.
+
+-"Repeated" est le nombre de répétition.
+
+-"Group" est la classification des participants ("ASD subjects" et "Typically developing children").
+
+-"VMA" est l'âge (à mois) mental verbal des participants, c'est-à-dire la compétence générale des langues. Les participants de deux groupes ont les VMA comparables.
+
+-"Raven" est l'intelligence non-vernale des participants. Les participants de deux groupes ont les RAVEN comparables.
+
+-"Sex" est le genre des participants
+
+
+```{r}
+library(tidyverse)
+```
+
+
+## Analyses des données
+
+D'abord, je crée un graphique général où il y a le pourcentage de bonne réponse pour les deux groupes d'enfants et un tiblle où on peut trouver le nombre de participants de chaque groupe et le pourcentage de bonne réponse.
+
+```{r pressure}
+
+graphe_general <- data %>%
+  group_by(Group,Correct) %>%
+  summarise(nombre = n()) %>%
+  spread(key = Correct, value = nombre) %>%
+  mutate(proportion =  VRAI / (VRAI + FAUX))
+
+ggplot(data = graphe_general) +
+  geom_bar(mapping = aes(x = Group, y = proportion, group = 100), stat = "identity", width = 0.4)
+
+(graphe_general)
+
+
+
+
+
+```
+
+
+On peut voir que en général les enfants développant typiquement (les enfants sans ASD) ont plus de difficultés à comprendre correctement la présupposition.
+
+
+Et puis on peut voir le pourcentage de la bonne réponse de chaque type de présuppositions pour ces deux groupes d'enfants.
+
+```{r}
+graphe_type <- data %>%
+  group_by(Group,Types,Correct) %>%
+  summarise(nombre = n()) %>%
+  spread(key = Correct, value = nombre) %>%
+  mutate(proportion = VRAI / (VRAI + FAUX))
+ggplot(data = graphe_type) +
+  geom_bar(mapping = aes(x = Group, y = proportion, fill = Types), position = "dodge", stat = "identity")
+
+(graphe_type)
+```
+
+C'est évident que la performance des enfants ASD a plus de distinction pour les types différents de présuppositions que les enfants normaux. Les présuppositions existentielles ont un avantage plus marquant pour les enfants ASD.
+
+
+Ensuite, on va voir si d'autres facteurs causent des effets sur la performance des enfants. On prend l'âge et l'intelligence non verbale comme exemple.
+
+```{r}
+
+graphe_age <- data %>%
+  group_by(Subject,Age_Month,Correct,Group) %>%
+  summarise(nombre = n()) %>%
+  spread(key = Correct, value = nombre) %>%
+  mutate(proportion = VRAI / (VRAI + FAUX))
+ggplot(data = graphe_age, mapping = aes(x = Age_Month, y = proportion, color = Group)) +
+  geom_point(na.rm = TRUE) +
+  geom_smooth(na.rm = TRUE) +
+  ggtitle("Age")
+
+graphe_Raven <- data %>%
+  group_by(Subject,Raven,Correct,Group) %>%
+  summarise(nombre = n()) %>%
+  spread(key = Correct, value = nombre) %>%
+  mutate(proportion = VRAI / (VRAI + FAUX))
+ggplot(data = graphe_Raven, mapping = aes(x = Raven, y = proportion, color = Group)) +
+  geom_smooth(na.rm = TRUE) +
+  ggtitle("Intelligence non-verbale")
+
+```
+
+Voyons d'abord l'âge des enfant.L'infuence de l'âge est régulière sur la comphréension des présuppositions pour les enfants développant typiquement. Cette compétence s'améliore avec la croissance de l'âge chronologique. Alors que les données des enfants ASD montrent plutôt un désordre. Il y a des participants qui ont une compétence assez faible en fonction de leur âge.
+Quant à l'intelligence non verbale, les données des enfants sans ASD manifestent un rapport direct tandis que celles des enfants ASD donnent un rapport inverse.
+
+
+## Discussion
+
+A partir de nos données, on peut trouver l'existence de la faiblesse des enfants ASD dans la performance des présuppositions en cantonais par rapport à des enfants développant typiquement, quelque soit le type des présuppositions.
+
+Un autre résultat important réside dans la différence de la capacité de comprendre les présuppositions de types différents. Les Présuppositions existentielles ont toujours les meilleurs réponses quelque soit le groupe de participants alors que celles structurelles ont les pires.
+
+D'autres facteurs impliquants ont aussi des effets sur la performance des enfants, comme l'âge chronologique et l'intelligence non-verbale qu'on a traité dans nos analyses. Ce qui étonne, c'est que les enfants ASD et les enfants normales ne subissent pas les mêmes influences par ces deux facteurs. Celles qui concernent les enfants ASD montrent plutôt une anormalie. Mais on ne peut pas appronfondir cette question avec les données actuelles.
+
+
+
+
+
+
+
+
+
+
+
+
