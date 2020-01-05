@@ -21,6 +21,9 @@ L'expérience cherche à comparer la performance sur les présuppositions de qua
 
 Dans le jeu de données original, il y a une varibale "Correct" dont la valeur est "TRUE" ou "FALSE" qui va susciter des problèmes dans les codes R. Mais je n'arrive pas à transmettre "TRUE"/"FALSE" en minuscule (ils deviennent tout de suite en majuscule après le changement). Ainsi, je les transforme en "VRAI"/"FAUX", expressions équivalentes en français en majuscule par python.
 
+
+
+
 ```{python, python.reticulate = FALSE}
 file_in = open('/Users/supeijia/Desktop/data.csv', 'r').readlines()
 file_out = open('/Users/supeijia/Desktop/data1.csv', 'w')
@@ -40,7 +43,7 @@ file_out2.close()
 On peut ainsi importer les données qui sont plus appropiées pour l'analyse.
 
 ```{r}
-data <- read.csv(file = "/Users/supeijia/Desktop/data.csv", header = TRUE, sep=",")
+data <- read.csv(file="https://raw.githubusercontent.com/supeijia/Projet-final/master/data.csv", header = TRUE, sep=",")
 ```
 
 Les données comprennent 10 variables :
