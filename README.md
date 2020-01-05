@@ -1,1 +1,2 @@
 # Projet-final
+Le repositoire comtient les données utilisées et les codes, sur la question de la compréhension des présuppositions par les enfants ASD et les enfants développant typiquement en cantonais.
